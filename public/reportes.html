@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - Geofencing</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .dashboard-container { max-width: 1200px; }
+        
+        /* Filtros */
+        .filters-bar {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-group { flex: 1; min-width: 150px; }
+        .filter-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; }
+        .form-control { width: 100%; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-family: 'Inter'; }
+        
+        /* Tabla de Reportes */
+        .report-table { width: 100%; border-collapse: collapse; }
+        .report-table th, .report-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); }
+        .report-table th { background: rgba(15, 23, 42, 0.4); color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; white-space: nowrap; }
+        .report-table tr:hover { background: rgba(59, 130, 246, 0.1); }
+        .text-right { text-align: right !important; }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .badge.bg-success { background: var(--success); color: white; }
+        .badge.bg-info { background: var(--primary); color: white; }
+
+        .code-block {
+            background: rgba(0,0,0,0.4);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #d1d5db;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container dashboard-container">
+        <header class="app-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="user-info">
+                <img src="https://ui-avatars.com/api/?name=Admin+GDS&background=8B5CF6&color=fff" alt="Avatar" class="avatar" style="border-color: #8b5cf6;">
+                <div>
+                    <h1>Reporte Consolidado de Horas</h1>
+                    <p class="role">Vista Analítica y Exportación</p>
+                </div>
+            </div>
+            <nav style="display: flex; gap: 10px;">
+                <a href="admin.html" class="btn" style="padding: 10px 15px; font-size: 0.85rem; background: transparent; border: 1px solid var(--border);">Atrás (Admin)</a>
+                <a href="supervisor.html" class="btn" style="padding: 10px 15px; font-size: 0.85rem; background: transparent; border: 1px solid var(--border);">Ir a Supervisor</a>
+                <a href="login.html" class="btn btn-danger" style="padding: 10px 15px; font-size: 0.85rem; border: none; box-shadow: none;">Cerrar Ses.</a>
+            </nav>
+        </header>
+
+        <main class="app-main">
+            <section class="gps-card" style="padding-bottom: 10px;">
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <label>Mes</label>
+                        <select class="form-control" id="filtroMes">
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Año</label>
+                        <select class="form-control" id="filtroAnio">
+                            <option value="2025">2025</option>
+                            <option value="2026">2026</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Técnico (Opcional)</label>
+                        <select class="form-control" id="filtroTecnico">
+                            <option value="">TODOS</option>
+                            <option value="" disabled>Cargando técnicos...</option>
+                        </select>
+                    </div>
+                    <button id="btnFiltrar" class="btn btn-primary" style="padding: 10px 20px; height: 42px; width: auto;" onclick="filtrarReporte()">
+                        Filtrar Datos
+                    </button>
+                    <button class="btn" style="padding: 10px 20px; height: 42px; width: auto; background: var(--success); margin-left: auto;">
+                        <span class="icon">⏬</span> Exportar a Excel
+                    </button>
+                </div>
+            </section>
+
+            <section class="gps-card" style="padding: 0; overflow: hidden;">
+                <div style="overflow-x: auto;">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Técnico</th>
+                                <th>Ticket</th>
+                                <th>Local / Cliente</th>
+                                <th>Hora Ingreso</th>
+                                <th>Hora Salida</th>
+                                <th class="text-right">Total Horas (Tolerancia)</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbReportes">
+                            <tr>
+                                <td colspan="8" style="padding: 25px; text-align: center; color: var(--text-muted);">
+                                    <em>Haga clic en filtrar para consolidar la data...</em>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot style="background: rgba(0,0,0,0.2);">
+                            <tr>
+                                <td colspan="6" class="text-right" style="font-weight: 600; padding: 15px;">Subtotal del Día Ocasional:</td>
+                                <td class="text-right" style="font-size: 1.1rem; color: var(--primary); font-weight: bold; padding: 15px;" id="txtTotalHoras">0.00 hrs</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </section>
+
+            <details style="margin-top: 10px;">
+                <summary style="color: var(--text-muted); cursor: pointer; font-size: 0.85rem; user-select: none;">Ver Query SQL Base (CTEs PostgreSQL)</summary>
+                <div class="code-block">
+WITH ParesMarcaciones AS (
+    SELECT 
+        m1.usuario_id,
+        m1.ticket_id,
+        DATE(m1.fecha_hora AT TIME ZONE 'America/Lima') AS fecha_reporte,
+        m1.fecha_hora AS hora_ingreso,
+        MIN(m2.fecha_hora) AS hora_salida
+    FROM marcaciones m1
+    LEFT JOIN marcaciones m2 
+        ON m1.usuario_id = m2.usuario_id 
+        AND m1.ticket_id = m2.ticket_id 
+        AND m2.tipo = 'SALIDA' 
+        AND m2.fecha_hora > m1.fecha_hora
+    WHERE m1.tipo = 'INGRESO'
+    GROUP BY m1.usuario_id, m1.ticket_id, m1.fecha_hora
+)
+SELECT 
+    u.nombre AS tecnico, t.numero_ticket, l.nombre AS local, p.fecha_reporte,
+    TO_CHAR(p.hora_ingreso AT TIME ZONE 'America/Lima', 'HH24:MI:SS') AS ingreso,
+    TO_CHAR(p.hora_salida AT TIME ZONE 'America/Lima', 'HH24:MI:SS') AS salida,
+    ROUND(EXTRACT(EPOCH FROM (p.hora_salida - p.hora_ingreso)) / 3600.0, 2) AS horas_totales
+FROM ParesMarcaciones p
+JOIN usuarios u ON p.usuario_id = u.id
+JOIN tickets t ON p.ticket_id = t.id
+JOIN locales l ON t.local_id = l.id
+WHERE p.hora_salida IS NOT NULL AND EXTRACT(MONTH FROM p.fecha_reporte) = 3;
+                </div>
+            </details>
+        </main>
+        <div id="toastReporte" class="toast hidden">
+            <p id="toast-message-reporte"></p>
+        </div>
+    </div>
+    
+    <script>
+        // Funciones Base
+        function mostrarToast(mensaje, tipo = 'success') {
+            const toast = document.getElementById('toastReporte');
+            const toastMsg = document.getElementById('toast-message-reporte');
+            toastMsg.textContent = mensaje;
+            if(!toast) return alert(mensaje);
+            toast.className = `toast ${tipo} show`;
+            setTimeout(() => toast.className = 'toast hidden', 3000);
+        }
+
+        // Cargar combos
+        async function initCombos() {
+            try {
+                // Seleccionar Mes Actual y Año
+                const d = new Date();
+                document.getElementById('filtroMes').value = d.getMonth() + 1;
+                document.getElementById('filtroAnio').value = d.getFullYear();
+
+                const resTecnicos = await fetch('/api/reportes/tecnicos');
+                const tecnicos = await resTecnicos.json();
+                
+                const selFiltro = document.getElementById('filtroTecnico');
+                selFiltro.innerHTML = '<option value="">TODOS</option>';
+                tecnicos.forEach(t => {
+                    selFiltro.innerHTML += `<option value="${t.id}">${t.nombre}</option>`;
+                });
+            } catch (error) {
+                console.error("Error cargando filtros:", error);
+            }
+        }
+
+        // Filtrar Datos y Renderizar Reporte
+        async function filtrarReporte() {
+            const btn = document.getElementById('btnFiltrar');
+            btn.innerHTML = 'Cargando...';
+            btn.disabled = true;
+
+            const mes = document.getElementById('filtroMes').value;
+            const anio = document.getElementById('filtroAnio').value;
+            const tecnico = document.getElementById('filtroTecnico').value;
+
+            try {
+                let url = `/api/reportes/consolidado?mes=${mes}&anio=${anio}`;
+                if (tecnico) url += `&tecnico_id=${tecnico}`;
+
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                const tb = document.getElementById('tbReportes');
+                const txtH = document.getElementById('txtTotalHoras');
+                tb.innerHTML = '';
+                
+                if(data.length === 0) {
+                    tb.innerHTML = '<tr><td colspan="8" style="padding: 25px; text-align: center; color: var(--text-muted); font-size: 0.9rem;"><em>No se encontraron marcaciones consolidadas para estos filtros.</em></td></tr>';
+                    txtH.textContent = '0.00 hrs';
+                    btn.disabled = false;
+                    btn.innerHTML = 'Filtrar Datos';
+                    return;
+                }
+
+                let sumatoriaHoras = 0;
+
+                data.forEach(r => {
+                    // Validar estado
+                    let estadoHtml = r.estado_ticket === 'CERRADO' 
+                        ? `<span class="badge bg-success">CERRADO</span>` 
+                        : `<span class="badge bg-info">EN RUTA</span>`;
+
+                    // Formato salida / Rutas
+                    let salidaHtml = `<span style="color: var(--text-muted);">Sin marcar</span>`;
+                    let hrsHtml = `<td class="text-right" style="color: var(--text-muted);">-</td>`;
+                    
+                    if (!r.en_ruta) {
+                        salidaHtml = `<span style="color: var(--danger);">${r.salida}</span>`;
+                        hrsHtml = `<td class="text-right"><strong>${r.horas_totales} hrs</strong></td>`;
+                        sumatoriaHoras += parseFloat(r.horas_totales);
+                    }
+
+                    // Formato fecha
+                    const fFormat = new Date(r.fecha_reporte).toISOString().split('T')[0];
+
+                    tb.innerHTML += `
+                        <tr>
+                            <td>${fFormat}</td>
+                            <td>${r.tecnico}</td>
+                            <td>${r.numero_ticket}</td>
+                            <td>${r.local_cliente}</td>
+                            <td><span style="color: var(--success);">${r.ingreso}</span></td>
+                            <td>${salidaHtml}</td>
+                            ${hrsHtml}
+                            <td>${estadoHtml}</td>
+                        </tr>
+                    `;
+                });
+
+                txtH.textContent = `${sumatoriaHoras.toFixed(2)} hrs`;
+
+            } catch (error) {
+                console.error("Error cargando reporte:", error);
+                mostrarToast('Error obteniendo el consolidado', 'error');
+            }
+
+            btn.innerHTML = 'Filtrar Datos';
+            btn.disabled = false;
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            initCombos();
+            // Ejecutar 1 vez por defecto si se desea
+            // filtrarReporte();
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin TI - Geofencing</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .dashboard-container { max-width: 1000px; }
+        .grid-container { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        @media (max-width: 768px) { .grid-container { grid-template-columns: 1fr; } }
+        
+        .pill-nav { display: flex; gap: 10px; margin-bottom: 20px; }
+        .pill { padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.05); cursor: pointer; border: 1px solid var(--border); transition: 0.3s; }
+        .pill.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .pill:hover:not(.active) { background: rgba(255,255,255,0.1); }
+        
+        .form-control { width: 100%; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; margin-bottom: 12px; font-family: 'Inter'; }
+        .form-control:focus { outline: none; border-color: var(--primary); }
+    </style>
+</head>
+<body>
+    <div class="app-container dashboard-container">
+        <header class="app-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="user-info">
+                <img src="https://ui-avatars.com/api/?name=Admin+TI&background=8B5CF6&color=fff" alt="Avatar" class="avatar" style="border-color: #8b5cf6;">
+                <div>
+                    <h1>Panel Administrador TI</h1>
+                    <p class="role">Gestión de Catálogo</p>
+                </div>
+            </div>
+            <nav style="display: flex; gap: 10px;">
+                <a href="login.html" class="btn btn-danger" style="padding: 10px 15px; font-size: 0.85rem; border: none; box-shadow: none;">Cerrar Sesión</a>
+            </nav>
+        </header>
+
+        <main class="app-main">
+            <!-- PANEL DE CONTROL RÁPIDO PARA ADMIN -->
+            <section class="gps-card" style="margin-bottom: 25px; border-left: 4px solid var(--primary);">
+                <h3 style="margin-bottom: 15px; font-size: 1rem; color: var(--primary);">🚀 Dashboard y Accesos del Sistema</h3>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <a href="index.html" class="btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border); flex: 1; text-align: center;">📲 Probar App Técnico</a>
+                    <a href="supervisor.html" class="btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border); flex: 1; text-align: center;">👁️ Panel Supervisor</a>
+                    <a href="reportes.html" class="btn" style="background: rgba(59,130,246,0.1); border: 1px solid var(--primary); color: white; flex: 1; text-align: center;">📊 Reportes y Asistencia</a>
+                </div>
+            </section>
+
+            <div class="pill-nav" style="border-top: 1px solid var(--border); padding-top: 25px;">
+                <div class="pill active" onclick="cambiarPestaña('usuarios', this)">Gestión Usuarios</div>
+                <div class="pill" onclick="cambiarPestaña('locales', this)">Gestión Locales</div>
+                <div class="pill" onclick="cambiarPestaña('clientes', this)">Gestión Clientes</div>
+            </div>
+
+            <!-- SECCION USUARIOS -->
+            <div id="seccion-usuarios" class="grid-container tab-content">
+                <section class="gps-card">
+                    <h2 style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">Nuevo Usuario</h2>
+                    <div style="margin-top: 15px;">
+                        <input type="text" id="nvoUsuDni" class="form-control" placeholder="DNI">
+                        <input type="text" id="nvoUsuNombre" class="form-control" placeholder="Nombre Completo">
+                        <input type="text" id="nvoUsuLogin" class="form-control" placeholder="Nombre de Usuario (Login)">
+                        <input type="password" id="nvoUsuPass" class="form-control" placeholder="Contraseña">
+                        
+                        <div class="custom-select" style="margin-bottom: 15px;">
+                            <select id="nvoUsuRol" style="padding: 12px;">
+                                <option value="TECNICO">Rol: Técnico</option>
+                                <option value="SUPERVISOR">Rol: Supervisor</option>
+                                <option value="ADMIN_TI">Rol: Admin TI</option>
+                            </select>
+                        </div>
+                        <button id="btnGrdUsuario" class="btn" style="padding: 12px; background-color: var(--success); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">Guardar Usuario</button>
+                    </div>
+                </section>
+
+                <section class="gps-card" style="padding: 0; overflow: hidden;">
+                    <h2 style="padding: 20px 20px 10px;">Usuarios Actuales</h2>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead style="background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border); border-top: 1px solid var(--border);">
+                                <tr>
+                                    <th style="padding: 12px 20px; font-size: 0.85rem; color: var(--text-muted);">Nombre</th>
+                                    <th style="padding: 12px 20px; font-size: 0.85rem; color: var(--text-muted);">Usuario</th>
+                                    <th style="padding: 12px 20px; font-size: 0.85rem; color: var(--text-muted);">Rol</th>
+                                    <th style="padding: 12px 20px; font-size: 0.85rem; color: var(--text-muted); text-align: center;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbUsuarios">
+                                <tr style="border-bottom: 1px solid var(--border);">
+                                    <td style="padding: 15px 20px;">Juan Perez</td>
+                                    <td style="padding: 15px 20px; color: var(--text-muted);">jperez</td>
+                                    <td style="padding: 15px 20px;"><span style="color: var(--primary); font-size: 0.85rem; background: rgba(59, 130, 246, 0.2); padding: 4px 8px; border-radius: 4px;">TECNICO</span></td>
+                                    <td style="padding: 15px 20px; text-align: center; white-space: nowrap;">
+                                        <button class="btn" style="padding: 6px 10px; font-size: 0.85rem; background: rgba(59, 130, 246, 0.2); color: var(--text-main); display: inline-block; width: auto; margin-right: 5px;" onclick="mostrarToast('Función Editar en desarrollo', 'success')">✏️</button>
+                                        <button class="btn" style="padding: 6px 10px; font-size: 0.85rem; background: rgba(239, 68, 68, 0.2); color: var(--text-main); display: inline-block; width: auto;" onclick="mostrarToast('Función Eliminar en desarrollo', 'error')">🗑️</button>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--border);">
+                                    <td style="padding: 15px 20px;">Técnico Demo</td>
+                                    <td style="padding: 15px 20px; color: var(--text-muted);">tdemo</td>
+                                    <td style="padding: 15px 20px;"><span style="color: var(--primary); font-size: 0.85rem; background: rgba(59, 130, 246, 0.2); padding: 4px 8px; border-radius: 4px;">TECNICO</span></td>
+                                    <td style="padding: 15px 20px; text-align: center; white-space: nowrap;">
+                                        <button class="btn" style="padding: 6px 10px; font-size: 0.85rem; background: rgba(59, 130, 246, 0.2); color: var(--text-main); display: inline-block; width: auto; margin-right: 5px;" onclick="mostrarToast('Función Editar en desarrollo', 'success')">✏️</button>
+                                        <button class="btn" style="padding: 6px 10px; font-size: 0.85rem; background: rgba(239, 68, 68, 0.2); color: var(--text-main); display: inline-block; width: auto;" onclick="mostrarToast('Función Eliminar en desarrollo', 'error')">🗑️</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- SECCION LOCALES -->
+            <div id="seccion-locales" class="grid-container tab-content" style="display: none;">
+                <section class="gps-card">
+                    <h2 style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">Nuevo Local / Sede</h2>
+                    <div style="margin-top: 15px;">
+                        <div class="custom-select" style="margin-bottom: 12px;">
+                            <select id="nvoLocCliente" style="padding: 12px;">
+                                <option value="Propio GDS">Sede propia (GDS)</option>
+                                <option value="Cliente ABC">Cliente ABC</option>
+                                <option value="Cliente XYZ">Cliente XYZ</option>
+                            </select>
+                        </div>
+                        <input type="text" id="nvoLocNombre" class="form-control" placeholder="Nombre del Local (Ej: Sede Surco)">
+                        <input type="text" id="nvoLocDir" class="form-control" placeholder="Dirección">
+                        <input type="text" id="nvoLocLat" class="form-control" placeholder="Latitud GPS (Ej: -12.046374)">
+                        <input type="text" id="nvoLocLng" class="form-control" placeholder="Longitud GPS (Ej: -77.042793)">
+                        <button id="btnGrdLocal" class="btn" style="padding: 12px; background-color: var(--success); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">Guardar Local</button>
+                    </div>
+                </section>
+
+                <section class="gps-card" style="padding: 0; overflow: hidden;">
+                    <h2 style="padding: 20px 20px 10px;">Locales Actuales</h2>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead style="background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border); border-top: 1px solid var(--border);">
+                                <tr>
+                                    <th style="padding: 12px 20px; font-size: 0.85rem; color: var(--text-muted);">Nombre</th>
+                                    <th style="padding: 12px 20px; font-size: 0.85rem; color: var(--text-muted);">Pertenece A</th>
+                                    <th style="padding: 12px 20px; font-size: 0.85rem; color: var(--text-muted); text-align: center;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbLocales">
+                                <tr style="border-bottom: 1px solid var(--border);">
+                                    <td style="padding: 15px 20px;">Sede GDS Principal</td>
+                                    <td style="padding: 15px 20px;"><span style="color: #10b981; font-size: 0.85rem; background: rgba(16, 185, 129, 0.2); padding: 4px 8px; border-radius: 4px;">Propio GDS</span></td>
+                                    <td style="padding: 15px 20px; text-align: center; white-space: nowrap;">
+                                        <button class="btn" style="padding: 6px 10px; font-size: 0.85rem; background: rgba(59, 130, 246, 0.2); color: var(--text-main); display: inline-block; width: auto; margin-right: 5px;" onclick="mostrarToast('Función Editar en desarrollo', 'success')">✏️</button>
+                                        <button class="btn" style="padding: 6px 10px; font-size: 0.85rem; background: rgba(239, 68, 68, 0.2); color: var(--text-main); display: inline-block; width: auto;" onclick="mostrarToast('Función Eliminar en desarrollo', 'error')">🗑️</button>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--border);">
+                                    <td style="padding: 15px 20px;">Local Av. Larco</td>
+                                    <td style="padding: 15px 20px; color: var(--text-muted);">Cliente ABC</td>
+                                    <td style="padding: 15px 20px; text-align: center; white-space: nowrap;">
+                                        <button class="btn" style="padding: 6px 10px; font-size: 0.85rem; background: rgba(59, 130, 246, 0.2); color: var(--text-main); display: inline-block; width: auto; margin-right: 5px;" onclick="mostrarToast('Función Editar en desarrollo', 'success')">✏️</button>
+                                        <button class="btn" style="padding: 6px 10px; font-size: 0.85rem; background: rgba(239, 68, 68, 0.2); color: var(--text-main); display: inline-block; width: auto;" onclick="mostrarToast('Función Eliminar en desarrollo', 'error')">🗑️</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- SECCION CLIENTES -->
+            <div id="seccion-clientes" class="grid-container tab-content" style="display: none;">
+                <section class="gps-card">
+                    <h2 style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">Nuevo Cliente</h2>
+                    <div style="margin-top: 15px;">
+                        <input type="text" id="nvoCliRuc" class="form-control" placeholder="RUC (11 dígitos)">
+                        <input type="text" id="nvoCliRazon" class="form-control" placeholder="Razón Social">
+                        <input type="text" id="nvoCliComercial" class="form-control" placeholder="Nombre Comercial (Opcional)">
+                        <input type="text" id="nvoCliFiscal" class="form-control" placeholder="Dirección Fiscal">
+                        
+                        <button id="btnGrdCliente" class="btn btn-primary" style="padding: 12px; background: #8b5cf6; box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);">Guardar Cliente</button>
+                    </div>
+                </section>
+
+                <section class="gps-card" style="padding: 0; overflow: hidden;">
+                    <h2 style="padding: 20px 20px 10px;">Clientes Actuales</h2>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead style="background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border); border-top: 1px solid var(--border);">
+                                <tr>
+                                    <th style="padding: 12px 20px; font-size: 0.85rem; color: var(--text-muted);">RUC</th>
+                                    <th style="padding: 12px 20px; font-size: 0.85rem; color: var(--text-muted);">Comercial</th>
+                                    <th style="padding: 12px 20px; font-size: 0.85rem; color: var(--text-muted); text-align: center;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbClientes">
+                                <tr style="border-bottom: 1px solid var(--border);">
+                                    <td style="padding: 15px 20px; color: var(--text-muted);">20551234567</td>
+                                    <td style="padding: 15px 20px;">Cliente ABC</td>
+                                    <td style="padding: 15px 20px; text-align: center; white-space: nowrap;">
+                                        <button class="btn" style="padding: 6px 10px; font-size: 0.85rem; background: rgba(59, 130, 246, 0.2); color: var(--text-main); display: inline-block; width: auto; margin-right: 5px;" onclick="mostrarToast('Función Editar en desarrollo', 'success')">✏️</button>
+                                        <button class="btn" style="padding: 6px 10px; font-size: 0.85rem; background: rgba(239, 68, 68, 0.2); color: var(--text-main); display: inline-block; width: auto;" onclick="mostrarToast('Función Eliminar en desarrollo', 'error')">🗑️</button>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--border);">
+                                    <td style="padding: 15px 20px; color: var(--text-muted);">20129876543</td>
+                                    <td style="padding: 15px 20px;">Cliente XYZ</td>
+                                    <td style="padding: 15px 20px; text-align: center; white-space: nowrap;">
+                                        <button class="btn" style="padding: 6px 10px; font-size: 0.85rem; background: rgba(59, 130, 246, 0.2); color: var(--text-main); display: inline-block; width: auto; margin-right: 5px;" onclick="mostrarToast('Función Editar en desarrollo', 'success')">✏️</button>
+                                        <button class="btn" style="padding: 6px 10px; font-size: 0.85rem; background: rgba(239, 68, 68, 0.2); color: var(--text-main); display: inline-block; width: auto;" onclick="mostrarToast('Función Eliminar en desarrollo', 'error')">🗑️</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+        
+        <div id="toastAdmin" class="toast hidden">
+            <p id="toast-message-admin"></p>
+        </div>
+    </div>
+
+    <script>
+        function cambiarPestaña(idSeccion, pillElement) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.style.display = 'none';
+            });
+            // Quitar clase active a todos los pills
+            document.querySelectorAll('.pill').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Mostrar seccion seleccionada y activar pill
+            document.getElementById('seccion-' + idSeccion).style.display = 'grid'; // Grid map el CSS .grid-container
+            // en mobile debe ser block, por lo que reasignamos segun tamaño en el responsive fallback si es necesario, pero flex/grid funciona.
+            pillElement.classList.add('active');
+        }
+
+        function mostrarToast(mensaje, tipo = 'success') {
+            const toast = document.getElementById('toastAdmin');
+            const toastMsg = document.getElementById('toast-message-admin');
+            toastMsg.textContent = mensaje;
+            if(toast) {
+                toast.className = `toast ${tipo} show`;
+                setTimeout(() => toast.className = 'toast hidden', 3000);
+            }
+        }
+
+        // --- LOGICA DE INTEGRACION API REST (DB REAL) ---
+        const btnAcciones = `
+            <td style="padding: 15px 20px; text-align: center; white-space: nowrap;">
+                <button class="btn" style="padding: 6px 10px; font-size: 0.85rem; background: rgba(59, 130, 246, 0.2); color: var(--text-main); display: inline-block; width: auto; margin-right: 5px;" onclick="mostrarToast('Función Editar en desarrollo', 'success')">✏️</button>
+                <button class="btn" style="padding: 6px 10px; font-size: 0.85rem; background: rgba(239, 68, 68, 0.2); color: var(--text-main); display: inline-block; width: auto;" onclick="this.closest('tr').remove(); mostrarToast('Fila eliminada visualmente.', 'success');">🗑️</button>
+            </td>
+        `;
+
+        // --- LECTURA DESDE BD ---
+        async function cargarClientes() {
+            try {
+                const res = await fetch('/api/admin/clientes');
+                if(!res.ok) throw new Error('Error al cargar clientes');
+                const clientes = await res.json();
+                
+                const tb = document.getElementById('tbClientes');
+                const select = document.getElementById('nvoLocCliente');
+                
+                tb.innerHTML = '';
+                select.innerHTML = '<option value="">Sede propia (GDS)</option>'; // Reset select
+
+                clientes.forEach(c => {
+                    const nombreMostrar = c.nombre_comercial || c.razon_social;
+                    tb.innerHTML += `
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 15px 20px; color: var(--text-muted);">${c.ruc}</td>
+                            <td style="padding: 15px 20px;">${nombreMostrar}</td>
+                            ${btnAcciones}
+                        </tr>
+                    `;
+                    select.innerHTML += `<option value="${c.id}">${nombreMostrar}</option>`;
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        async function cargarLocales() {
+            try {
+                const res = await fetch('/api/admin/locales');
+                if(!res.ok) throw new Error('Error al cargar locales');
+                const locales = await res.json();
+                
+                const tb = document.getElementById('tbLocales');
+                tb.innerHTML = '';
+
+                locales.forEach(l => {
+                    const perteneceA = l.es_sede_gds ? 
+                        '<span style="color: #10b981; font-size: 0.85rem; background: rgba(16, 185, 129, 0.2); padding: 4px 8px; border-radius: 4px;">Propio GDS</span>' : 
+                        l.cliente_nombre;
+
+                    tb.innerHTML += `
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 15px 20px;">${l.nombre}</td>
+                            <td style="padding: 15px 20px;">${perteneceA}</td>
+                            ${btnAcciones}
+                        </tr>
+                    `;
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        async function cargarUsuarios() {
+            try {
+                const res = await fetch('/api/admin/usuarios');
+                if(!res.ok) throw new Error('Error al cargar usuarios');
+                const usuarios = await res.json();
+                
+                const tb = document.getElementById('tbUsuarios');
+                tb.innerHTML = '';
+
+                usuarios.forEach(u => {
+                    tb.innerHTML += `
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 15px 20px;">${u.nombre}</td>
+                            <td style="padding: 15px 20px; color: var(--text-muted);">${u.usuario}</td>
+                            <td style="padding: 15px 20px;"><span style="color: var(--primary); font-size: 0.85rem; background: rgba(59, 130, 246, 0.2); padding: 4px 8px; border-radius: 4px;">${u.rol}</span></td>
+                            ${btnAcciones}
+                        </tr>
+                    `;
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        // Cargar todo al inicio
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarClientes();
+            cargarLocales();
+            cargarUsuarios();
+        });
+
+        // --- ESCRITURA HACIA BD ---
+        // 1. Guardar Usuario
+        document.getElementById('btnGrdUsuario').addEventListener('click', async () => {
+            const dni = document.getElementById('nvoUsuDni').value;
+            const nombre = document.getElementById('nvoUsuNombre').value;
+            const usuario = document.getElementById('nvoUsuLogin').value;
+            const password_hash = document.getElementById('nvoUsuPass').value;
+            const rol = document.getElementById('nvoUsuRol').value;
+
+            if(!nombre || !usuario || !rol || !dni || !password_hash) {
+                return mostrarToast('Por favor complete todos los datos', 'error');
+            }
+
+            try {
+                const res = await fetch('/api/admin/usuarios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dni, nombre, usuario, password_hash, rol })
+                });
+                if(res.ok) {
+                    mostrarToast(`El usuario ${nombre} fue creado exitosamente en BD.`, 'success');
+                    document.getElementById('nvoUsuDni').value = '';
+                    document.getElementById('nvoUsuNombre').value = '';
+                    document.getElementById('nvoUsuLogin').value = '';
+                    document.getElementById('nvoUsuPass').value = '';
+                    cargarUsuarios(); // Recargar tabla
+                } else { throw new Error((await res.json()).error); }
+            } catch(e) { mostrarToast(e.message, 'error'); }
+        });
+
+        // 2. Guardar Local
+        document.getElementById('btnGrdLocal').addEventListener('click', async () => {
+            const cliente_id = document.getElementById('nvoLocCliente').value;
+            const nombre = document.getElementById('nvoLocNombre').value;
+            const direccion = document.getElementById('nvoLocDir').value;
+            const latitud = document.getElementById('nvoLocLat').value;
+            const longitud = document.getElementById('nvoLocLng').value;
+
+            if(!nombre || !latitud || !longitud) {
+                return mostrarToast('Se requiere nombre y coordenadas GPS.', 'error');
+            }
+
+            try {
+                const res = await fetch('/api/admin/locales', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        cliente_id: cliente_id === "" ? null : cliente_id, 
+                        nombre, direccion, 
+                        latitud: parseFloat(latitud), longitud: parseFloat(longitud) 
+                    })
+                });
+                if(res.ok) {
+                    mostrarToast(`El local ${nombre} fue registrado exitosamente.`, 'success');
+                    document.getElementById('nvoLocNombre').value = '';
+                    document.getElementById('nvoLocDir').value = '';
+                    document.getElementById('nvoLocLat').value = '';
+                    document.getElementById('nvoLocLng').value = '';
+                    cargarLocales();
+                } else { throw new Error((await res.json()).error); }
+            } catch(e) { mostrarToast(e.message, 'error'); }
+        });
+
+        // 3. Guardar Cliente
+        document.getElementById('btnGrdCliente').addEventListener('click', async () => {
+            const ruc = document.getElementById('nvoCliRuc').value;
+            const razon_social = document.getElementById('nvoCliRazon').value;
+            const nombre_comercial = document.getElementById('nvoCliComercial').value;
+            const direccion = document.getElementById('nvoCliFiscal').value;
+
+            if(!ruc || !razon_social) {
+                return mostrarToast('Se requiere el RUC y Razón Social.', 'error');
+            }
+
+            try {
+                const res = await fetch('/api/admin/clientes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ruc, razon_social, nombre_comercial, direccion })
+                });
+                if(res.ok) {
+                    mostrarToast(`Cliente guardado correctamente en BD.`, 'success');
+                    document.getElementById('nvoCliRuc').value = '';
+                    document.getElementById('nvoCliRazon').value = '';
+                    document.getElementById('nvoCliComercial').value = '';
+                    document.getElementById('nvoCliFiscal').value = '';
+                    cargarClientes();
+                } else { throw new Error((await res.json()).error); }
+            } catch(e) { mostrarToast(e.message, 'error'); }
+        });
+
+    </script>
+    </div>
+</body>
+</html>

@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Supervisor - Geofencing</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .dashboard-container { max-width: 1200px; }
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid-container { grid-template-columns: 1fr; } }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .data-table th, .data-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        .data-table th { background: rgba(15, 23, 42, 0.4); color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
+        .data-table tr:hover { background: rgba(59, 130, 246, 0.1); }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .badge.bg-success { background: var(--success); color: white; }
+        .badge.bg-danger { background: var(--danger); color: white; }
+        .badge.bg-warning { background: #f59e0b; color: white; }
+        .badge.bg-info { background: var(--primary); color: white; }
+        .button-group { display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+    <div class="app-container dashboard-container">
+        <header class="app-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="user-info">
+                <img src="https://ui-avatars.com/api/?name=Supervisor+GDS&background=10B981&color=fff" alt="Avatar" class="avatar" style="border-color: var(--success);">
+                <div>
+                    <h1>Panel Supervisor</h1>
+                    <p class="role">Vista de Control y Operaciones</p>
+                </div>
+            </div>
+            <nav style="display: flex; gap: 10px;">
+                <a href="index.html" class="btn" style="padding: 10px 15px; font-size: 0.85rem; background: transparent; border: 1px solid var(--border);">Ir a Técnico</a>
+                <a href="admin.html" class="btn" style="padding: 10px 15px; font-size: 0.85rem; background: transparent; border: 1px solid var(--border);">Ir a Admin</a>
+                <a href="login.html" class="btn btn-danger" style="padding: 10px 15px; font-size: 0.85rem; border: none; box-shadow: none;">Cerrar Ses.</a>
+            </nav>
+        </header>
+
+        <main class="app-main">
+            <!-- PESTAÑAS (PILLS) -->
+            <div class="pill-nav">
+                <div class="pill active" onclick="cambiarPestañaSup('monitoreo', this)">Monitoreo Vivo</div>
+                <div class="pill" onclick="cambiarPestañaSup('tickets', this)">Gestión Tickets</div>
+                <div class="pill" onclick="cambiarPestañaSup('lista-tickets', this)">Historial Tickets</div>
+                <div class="pill" onclick="cambiarPestañaSup('manual', this)">Registro Manual</div>
+                <div class="pill" onclick="cambiarPestañaSup('asistencia', this)">Mi Asistencia</div>
+            </div>
+
+            <!-- SECCION: MONITOREO VIVO -->
+            <div id="seccion-monitoreo" class="tab-content" style="display: block;">
+                <section class="gps-card">
+                    <h2>Últimas Marcaciones</h2>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Cód. / Téc.</th>
+                                    <th>Ticket</th>
+                                    <th>Tipo</th>
+                                    <th>Hora</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaMarcaciones">
+                                <tr>
+                                    <td>Juan Perez</td>
+                                    <td>TCK-001</td>
+                                    <td><span class="badge bg-success">INGRESO</span></td>
+                                    <td>10:45 AM</td>
+                                </tr>
+                                <tr>
+                                    <td>Técnico Demo</td>
+                                    <td>TCK-002</td>
+                                    <td><span class="badge bg-danger">SALIDA</span></td>
+                                    <td>09:30 AM</td>
+                                </tr>
+                                <tr>
+                                    <td>Supervisor GDS</td>
+                                    <td>-</td>
+                                    <td><span class="badge bg-info">MI INGRESO</span></td>
+                                    <td>08:00 AM</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- SECCION: GESTIÓN DE TICKETS -->
+            <div id="seccion-tickets" class="tab-content" style="display: none;">
+                <section class="gps-card">
+                    <h2>Apertura de Nuevos Tickets</h2>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;">Apertura de requerimientos para las sedes y clientes.</p>
+                    
+                    <div class="input-group grid-container" style="gap: 15px; margin-bottom: 5px;">
+                        <div>
+                            <label>Código del Ticket (Alfanumérico)</label>
+                            <input type="text" id="codTicket" placeholder="Ej: TCK-2026B" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; margin-bottom: 5px; font-family: 'Inter'; text-transform: uppercase;">
+                        </div>
+
+                        <div>
+                            <label>Cliente</label>
+                            <div class="custom-select" style="margin-bottom: 5px;">
+                                <select id="clienteTicket" onchange="filtrarLocalesPorCliente()">
+                                    <option value="" disabled selected>Cargando clientes...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label>Fecha de Creación</label>
+                            <input type="date" id="fechaTicket" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; margin-bottom: 5px; font-family: 'Inter';">
+                        </div>
+                        
+                        <div>
+                            <label>Local / Sede</label>
+                            <div class="custom-select" style="margin-bottom: 5px;">
+                                <select id="localTicket" disabled>
+                                    <option value="" disabled selected>Seleccione primero el Cliente...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label>Descripción del Problema</label>
+                            <input type="text" id="descTicket" placeholder="Ej: Revisión de cableado" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; margin-bottom: 5px; font-family: 'Inter';">
+                        </div>
+                    </div>
+
+                    <button id="btnAbrirTicket" class="btn" style="margin-top: 15px; background-color: var(--success); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
+                        <span class="icon">➕</span> Abrir Nuevo Ticket
+                    </button>
+
+                </section>
+            </div>
+
+            <!-- SECCION: HISTORIAL DE TICKETS -->
+            <div id="seccion-lista-tickets" class="tab-content" style="display: none;">
+                <section class="gps-card">
+                    <h2>Historial y Tickets Abiertos</h2>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;">Listado de todos los tickets. Filtre por sucursal, mes o año.</p>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 25px; align-items: center; flex-wrap: wrap;">
+                        <div class="custom-select" style="flex: 1; min-width: 140px;">
+                            <select id="filtroMes" style="font-weight: 600; font-size: 1.1rem; padding: 18px; border: 2px solid var(--border);">
+                                <option value="TODOS">Mes (Todos)</option>
+                                <option value="1">Enero</option>
+                                <option value="2">Febrero</option>
+                                <option value="3">Marzo</option>
+                                <option value="4">Abril</option>
+                                <option value="5">Mayo</option>
+                                <option value="6">Junio</option>
+                                <option value="7">Julio</option>
+                                <option value="8">Agosto</option>
+                                <option value="9">Septiembre</option>
+                                <option value="10">Octubre</option>
+                                <option value="11">Noviembre</option>
+                                <option value="12">Diciembre</option>
+                            </select>
+                        </div>
+                        <div class="custom-select" style="flex: 1; min-width: 140px;">
+                            <select id="filtroAnio" style="font-weight: 600; font-size: 1.1rem; padding: 18px; border: 2px solid var(--border);">
+                                <option value="TODOS">Año (Todos)</option>
+                                <option value="2026">2026</option>
+                                <option value="2025">2025</option>
+                            </select>
+                        </div>
+                        <button class="btn" style="padding: 18px 24px; min-width: 130px; background-color: #8b5cf6; box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4); font-size: 1.1rem;" onclick="filtrarHistorialTickets()">🔍 Filtrar</button>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Fecha Requerida</th>
+                                <th>Estado / Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaHistorialTickets">
+                            <!-- Los tickets se cargarán dinamícamente desde la BD -->
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+
+            <!-- SECCION: REGISTRO MANUAL -->
+            <div id="seccion-manual" class="tab-content" style="display: none;">
+                <section class="gps-card">
+                    <h2>Registro Manual (Bypass GPS)</h2>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;">Registrar asistencia técnica exceptuando la regla de geocerca en caso de fallos.</p>
+                    
+                    <div class="input-group">
+                        <label>Técnico</label>
+                        <div class="custom-select">
+                            <select id="tecnicoManual" style="margin-bottom: 12px;">
+                                <option value="1">Técnico Demo (ID:1)</option>
+                                <option value="2">Juan Perez (ID:2)</option>
+                            </select>
+                        </div>
+                        
+                        <label>Ticket</label>
+                        <div class="custom-select">
+                            <select id="ticketManual" style="margin-bottom: 12px;">
+                                <option value="" disabled selected>Cargando tickets...</option>
+                            </select>
+                        </div>
+
+                        <label>Tipo de Marcación</label>
+                        <div class="custom-select">
+                            <select id="tipoManual" style="margin-bottom: 20px;">
+                                <option value="INGRESO">Ingreso</option>
+                                <option value="SALIDA">Salida</option>
+                            </select>
+                        </div>
+                        
+                        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                            <div style="flex: 1;">
+                                <label>Fecha</label>
+                                <input type="date" id="fechaManual" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-family: 'Inter';">
+                            </div>
+                            <div style="flex: 1;">
+                                <label>Hora Exacta</label>
+                                <input type="time" id="horaManual" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-family: 'Inter';">
+                            </div>
+                        </div>
+
+                        <button id="btnManual" class="btn btn-primary" style="background-color: #f59e0b; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);">
+                            <span class="icon">✍️</span> Forzar Marcación
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- SECCION: MI ASISTENCIA -->
+            <div id="seccion-asistencia" class="tab-content" style="display: none;">
+                <section class="gps-card">
+                    <h2>Mi Asistencia (Supervisor)</h2>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;">Marcación de tu propio ingreso y salida de turno administrativo.</p>
+                    <div class="button-group">
+                        <button id="btnMiIngreso" class="btn btn-ingreso">
+                            <span class="icon">➔</span> Mi INGRESO
+                        </button>
+                        <button id="btnMiSalida" class="btn btn-salida">
+                            <span class="icon">🚪</span> Mi SALIDA
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </main>
+        
+        <div id="toastSup" class="toast hidden">
+            <p id="toast-message-sup"></p>
+        </div>
+    </div>
+    <script>
+        // Establecer fecha actual por defecto en filtros al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            const fechaHoy = new Date();
+            const mesReal = fechaHoy.getMonth() + 1; // getMonth() es 0-11
+            const anioReal = fechaHoy.getFullYear();
+            
+            const cmbMes = document.getElementById('filtroMes');
+            if(cmbMes.querySelector(`option[value="${mesReal}"]`)) {
+                cmbMes.value = mesReal.toString();
+            }
+            
+            const cmbAnio = document.getElementById('filtroAnio');
+            // Autocompletar el año actual si no existe en la lista
+            if(!cmbAnio.querySelector(`option[value="${anioReal}"]`)) {
+                const optAnio = document.createElement('option');
+                optAnio.value = anioReal;
+                optAnio.textContent = anioReal;
+                cmbAnio.insertBefore(optAnio, cmbAnio.children[1]); // Insertar después del "Todos"
+            }
+            cmbAnio.value = anioReal.toString();
+            
+            // Establecer fecha de hoy en el Input de Nuevo Ticket
+            const inputFecha = document.getElementById('fechaTicket');
+            const sm = (fechaHoy.getMonth() + 1).toString().padStart(2, '0');
+            const sd = fechaHoy.getDate().toString().padStart(2, '0');
+            const strFechaHoy = `${anioReal}-${sm}-${sd}`;
+            
+            inputFecha.value = strFechaHoy;
+            
+            // Establecer fecha y hora actuales en Registro Manual
+            const inputFechaManual = document.getElementById('fechaManual');
+            const inputHoraManual = document.getElementById('horaManual');
+            
+            if (inputFechaManual && inputHoraManual) {
+                inputFechaManual.value = strFechaHoy;
+                
+                const horas = fechaHoy.getHours().toString().padStart(2, '0');
+                const minutos = fechaHoy.getMinutes().toString().padStart(2, '0');
+                inputHoraManual.value = `${horas}:${minutos}`;
+            }
+        });
+
+        // Filtrar Historial de Tickets
+        function filtrarHistorialTickets() {
+            const mesSel = document.getElementById('filtroMes').value;
+            const anioSel = document.getElementById('filtroAnio').value;
+            const filas = document.querySelectorAll('#listaHistorialTickets tr');
+            let encontrados = 0;
+
+            filas.forEach(fila => {
+                const celdaTarget = fila.querySelector('td:nth-child(2)');
+                if(!celdaTarget) return;
+
+                // Extraemos la fecha (ej: 2026-03-14 o 2026-02-28)
+                const textoFecha = celdaTarget.textContent.trim();
+                const partes = textoFecha.split('-');
+                
+                if(partes.length >= 2) {
+                    const filaAnio = partes[0];
+                    const filaMes = parseInt(partes[1], 10).toString(); // Convertimos "03" a "3" para igualar value de select
+
+                    const parseMes = (mesSel === 'TODOS' || mesSel === filaMes);
+                    const parseAnio = (anioSel === 'TODOS' || anioSel === filaAnio);
+
+                    if (parseMes && parseAnio) {
+                        fila.style.display = '';
+                        encontrados++;
+                    } else {
+                        fila.style.display = 'none';
+                    }
+                } else {
+                    // Si hay una fila sin formato YYYY-MM-DD
+                    fila.style.display = ''; 
+                    encontrados++;
+                }
+            });
+
+            if(encontrados === 0) {
+                mostrarToast(`No se encontraron tickets con esos filtros.`, 'error');
+            } else {
+                mostrarToast(`Mostrando ${encontrados} ticket(s) filtrado(s).`, 'success');
+            }
+        }
+
+        function cambiarPestañaSup(seccion, elemento) {
+            document.querySelectorAll('.app-main .tab-content').forEach(div => div.style.display = 'none');
+            document.querySelectorAll('.app-main .pill').forEach(pill => pill.classList.remove('active'));
+            document.getElementById('seccion-' + seccion).style.display = 'block';
+            elemento.classList.add('active');
+        }
+
+        function mostrarToast(mensaje, tipo = 'success') {
+            const toast = document.getElementById('toastSup');
+            const toastMsg = document.getElementById('toast-message-sup');
+            toastMsg.textContent = mensaje;
+            toast.className = `toast ${tipo} show`;
+            setTimeout(() => toast.className = 'toast hidden', 3000);
+        }
+
+        // Mock Forzar Marcación
+        document.getElementById('btnManual').addEventListener('click', async () => {
+            const btn = document.getElementById('btnManual');
+            const fechaManual = document.getElementById('fechaManual').value;
+            const horaManual = document.getElementById('horaManual').value;
+            
+            if(!fechaManual || !horaManual) {
+                mostrarToast('Se requiere especificar la fecha y hora de la marcación.', 'error');
+                return;
+            }
+            
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Procesando...';
+            btn.disabled = true;
+
+            await new Promise(r => setTimeout(r, 800));
+            mostrarToast(`Registro forzado guardado para el ${fechaManual} a las ${horaManual}.`);
+            
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+
+        // Funcionalidad para botones de cerrar ticket
+        async function cerrarTicket(id, btnElement) {
+            btnElement.disabled = true;
+            btnElement.innerHTML = 'Cerrando...';
+            try {
+                const res = await fetch(`/api/supervisor/tickets/${id}/cerrar`, { method: 'PUT' });
+                if(res.ok) {
+                    mostrarToast('Ticket cerrado correctamente.');
+                    btnElement.closest('tr').style.opacity = '0.5';
+                    btnElement.outerHTML = '<span style="color: var(--success); font-weight: bold; font-size: 0.8rem;">CERRADO</span>';
+                } else {
+                    throw new Error((await res.json()).error);
+                }
+            } catch(error) {
+                mostrarToast(error.message, 'error');
+                btnElement.disabled = false;
+                btnElement.innerHTML = 'Cerrar Ticket';
+            }
+        }
+
+        // --- SISTEMA DE INTEGRACION BD (FETCH) ---
+        let baseLocales = []; // cache array
+        
+        async function inicializarFormularioTickets() {
+            try {
+                // 1. Cargar Clientes
+                const resCli = await fetch('/api/admin/clientes', { cache: 'no-store' });
+                if (!resCli.ok) throw new Error(`HTTP ${resCli.status} al cargar clientes`);
+                const clientes = await resCli.json();
+                const selCli = document.getElementById('clienteTicket');
+                selCli.innerHTML = '<option value="" disabled selected>Seleccione Cliente...</option><option value="GDS">Sede Propia (GDS)</option>';
+                clientes.forEach(c => {
+                    selCli.innerHTML += `<option value="${c.id}">${c.nombre_comercial || c.razon_social}</option>`;
+                });
+
+                // 2. Cargar Locales (Guardamos en memoria para filtrar rápido)
+                const resLoc = await fetch('/api/admin/locales', { cache: 'no-store' });
+                if (!resLoc.ok) throw new Error(`HTTP ${resLoc.status} al cargar locales`);
+                baseLocales = await resLoc.json();
+
+            } catch (error) {
+                console.error('Error cargando base de datos: ', error);
+                mostrarToast('Error cargando catálogo de BD: ' + error.message, 'error');
+            }
+        }
+
+        function filtrarLocalesPorCliente() {
+            const clienteVal = document.getElementById('clienteTicket').value;
+            const localSelect = document.getElementById('localTicket');
+            
+            localSelect.innerHTML = '<option value="" disabled selected>Seleccione el Local...</option>';
+            
+            let filtrados = [];
+            if(clienteVal === 'GDS') {
+                filtrados = baseLocales.filter(l => l.es_sede_gds);
+            } else {
+                filtrados = baseLocales.filter(l => l.cliente_id == clienteVal);
+            }
+
+            if (filtrados.length > 0) {
+                filtrados.forEach(local => {
+                    const opt = document.createElement('option');
+                    opt.value = local.id;
+                    opt.textContent = local.nombre;
+                    localSelect.appendChild(opt);
+                });
+                localSelect.disabled = false;
+            } else {
+                localSelect.innerHTML = '<option value="" disabled selected>No hay locales para este cliente</option>';
+                localSelect.disabled = true;
+            }
+        }
+
+        // Cargar y Listar Todos los Tickets (Historial)
+        async function cargarHistorialTickets() {
+            try {
+                const res = await fetch('/api/supervisor/tickets');
+                const tickets = await res.json();
+                const tb = document.getElementById('listaHistorialTickets');
+                const selManual = document.getElementById('ticketManual');
+                
+                tb.innerHTML = '';
+                selManual.innerHTML = '<option value="" disabled selected>Seleccione un ticket abierto...</option>';
+
+                tickets.forEach(t => {
+                    // Popular la tabla del panel
+                    const esCerrado = t.estado === 'CERRADO';
+                    const accionHtml = esCerrado ? 
+                        `<span style="color: var(--success); font-weight: bold; font-size: 0.8rem;">CERRADO</span>` : 
+                        `<button class="btn btn-salida" style="padding: 6px 10px; font-size: 0.75rem;" onclick="cerrarTicket(${t.id}, this)">Cerrar Ticket</button>`;
+
+                    const fechaSolo = new Date(t.fecha_creacion).toISOString().split('T')[0];
+
+                    tb.innerHTML += `
+                        <tr>
+                            <td>
+                                <div style="font-weight: bold;">${t.numero_ticket.toUpperCase()}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">${t.local_nombre}</div>
+                            </td>
+                            <td><span style="color: var(--primary); font-weight: bold;">${fechaSolo}</span></td>
+                            <td>${accionHtml}</td>
+                        </tr>
+                    `;
+
+                    // Llenar el select del Registro Manual (Solo tickets abiertos)
+                    if(!esCerrado) {
+                        selManual.innerHTML += `<option value="${t.id}">${t.numero_ticket} (${t.local_nombre})</option>`;
+                    }
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Abrir Nuevo Ticket
+        document.getElementById('btnAbrirTicket').addEventListener('click', async () => {
+            const btn = document.getElementById('btnAbrirTicket');
+            const cod = document.getElementById('codTicket').value;
+            const locId = document.getElementById('localTicket').value;
+            const desc = document.getElementById('descTicket').value;
+            const fecha = document.getElementById('fechaTicket').value;
+
+            if(!cod || !locId || !desc || !fecha) {
+                mostrarToast('Complete todos los campos del ticket', 'error');
+                return;
+            }
+
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Creando...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/supervisor/tickets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        numero_ticket: cod,
+                        local_id: parseInt(locId),
+                        descripcion: desc,
+                        fecha_creacion: fecha
+                    })
+                });
+
+                if(res.ok) {
+                    mostrarToast(`Ticket ${cod.toUpperCase()} creado con éxito.`);
+                    
+                    document.getElementById('codTicket').value = '';
+                    document.getElementById('descTicket').value = '';
+                    document.getElementById('clienteTicket').value = '';
+                    document.getElementById('localTicket').innerHTML = '<option value="" disabled selected>Seleccione primero el Cliente...</option>';
+                    document.getElementById('localTicket').disabled = true;
+                    
+                    cargarHistorialTickets(); // Refrescar tablas
+                } else {
+                    throw new Error((await res.json()).error);
+                }
+            } catch (error) {
+                mostrarToast(error.message, 'error');
+            }
+
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+
+        // Al iniciar
+        document.addEventListener('DOMContentLoaded', () => {
+            inicializarFormularioTickets();
+            cargarHistorialTickets();
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geofencing Asistencia</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="user-info">
+                <img src="https://ui-avatars.com/api/?name=Tecnico+Demo&background=0D8ABC&color=fff" alt="Avatar" class="avatar">
+                <div>
+                    <h1>Técnico Demo</h1>
+                    <p class="role">ID: 1001</p>
+                </div>
+            </div>
+            <nav style="display: flex; gap: 10px;">
+                <a href="supervisor.html" class="btn" style="padding: 10px 15px; font-size: 0.85rem; background: transparent; border: 1px solid var(--border);">Ir a Supervisor</a>
+                <a href="admin.html" class="btn" style="padding: 10px 15px; font-size: 0.85rem; background: transparent; border: 1px solid var(--border);">Ir a Admin</a>
+                <a href="login.html" class="btn btn-danger" style="padding: 10px 15px; font-size: 0.85rem; border: none; box-shadow: none;">Cerrar Ses.</a>
+            </nav>
+        </header>
+
+        <main class="app-main">
+            <div class="pill-nav">
+                <div class="pill active" onclick="cambiarPestañaTecnico('registro', this)">Marcar Asistencia</div>
+                <div class="pill" onclick="cambiarPestañaTecnico('historial', this)">Mi Historial</div>
+            </div>
+
+            <!-- SECCION: REGISTRO GEOLOCALIZADO -->
+            <div id="seccion-registro" class="tab-content" style="display: block;">
+                <section class="ticket-selection">
+                    <h2>Seleccione su Ticket</h2>
+                    <div class="input-group">
+                        <label for="ticketSelect">Ticket Activo</label>
+                        <div class="custom-select">
+                            <select id="ticketSelect">
+                                <option value="" disabled selected>Cargando tickets...</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="location-status" style="margin-bottom: 20px;">
+                    <div class="gps-card" style="text-align: center; padding: 15px;">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Fecha y Hora de Marcación</div>
+                        <div id="live-clock" style="font-size: 1.5rem; font-weight: 700; color: white; display: flex; justify-content: center; align-items: center; gap: 10px;">
+                            <span>--:--:--</span>
+                        </div>
+                        <div id="live-date" style="font-size: 0.9rem; color: var(--primary); margin-top: 5px;">Cargando fecha...</div>
+                    </div>
+                </section>
+
+                <section class="location-status">
+                    <div class="gps-card">
+                        <div class="gps-header">
+                            <div class="gps-icon">📍</div>
+                            <h3>Estado GPS</h3>
+                        </div>
+                        <p id="gps-text">Obteniendo ubicación...</p>
+                        <p id="gps-accuracy" class="accuracy-text"></p>
+                    </div>
+                </section>
+
+                <section class="action-buttons">
+                    <button id="btnIngreso" class="btn btn-primary btn-ingreso" disabled>
+                        <span class="icon">➔</span> 
+                        Marcar INGRESO
+                    </button>
+                    <button id="btnSalida" class="btn btn-danger btn-salida" disabled>
+                        <span class="icon">🚪</span> 
+                        Marcar SALIDA
+                    </button>
+                </section>
+            </div>
+
+            <!-- SECCION: HISTORIAL MENSUAL -->
+            <div id="seccion-historial" class="tab-content" style="display: none;">
+                <section class="gps-card" style="padding: 0; overflow: hidden; margin-top: 10px;">
+                    <div style="padding: 20px 20px 10px; display: flex; align-items: center; justify-content: space-between;">
+                        <h2 style="margin: 0;">Registro Histórico</h2>
+                        <span id="txtMesActual" style="font-size: 0.85rem; color: var(--primary); font-weight: 600; background: rgba(59, 130, 246, 0.1); padding: 4px 10px; border-radius: 12px; white-space: nowrap;">Mes Actual</span>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead style="background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border); border-top: 1px solid var(--border);">
+                                <tr>
+                                    <th style="padding: 12px 20px; font-size: 0.85rem; color: var(--text-muted);">Ticket / Sede</th>
+                                    <th style="padding: 12px 20px; font-size: 0.85rem; color: var(--text-muted);">Tipo</th>
+                                    <th style="padding: 12px 20px; font-size: 0.85rem; color: var(--text-muted);">Fecha y Hora</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbHistorialTecnico">
+                                <tr>
+                                    <td colspan="3" style="padding: 25px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+                                        <em>Cargando marcaciones...</em>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <div id="toast" class="toast hidden">
+            <p id="toast-message"></p>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Mostrar texto del mes y año actual por defecto
+            const hoy = new Date();
+            const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const txtMes = document.getElementById('txtMesActual');
+            if (txtMes) {
+                txtMes.textContent = `${meses[hoy.getMonth()]} ${hoy.getFullYear()}`;
+            }
+        });
+
+        function cambiarPestañaTecnico(seccion, elemento) {
+            document.querySelectorAll('#seccion-registro, #seccion-historial').forEach(div => div.style.display = 'none');
+            document.querySelectorAll('.app-main .pill').forEach(pill => pill.classList.remove('active'));
+            document.getElementById('seccion-' + seccion).style.display = 'block';
+            elemento.classList.add('active');
+        }
+    </script>
+</body>
+</html>

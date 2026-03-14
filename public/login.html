@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Geofencing</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            border-radius: 24px;
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .login-header { margin-bottom: 30px; }
+        .login-header h1 { font-size: 1.5rem; margin-bottom: 8px; color: white; }
+        .login-header p { font-size: 0.9rem; color: var(--text-muted); }
+
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; }
+        
+        .form-control {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            color: white;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus { outline: none; border-color: var(--primary); background: rgba(0, 0, 0, 0.4); }
+
+        .btn-login { margin-top: 10px; width: 100%; }
+
+        /* Icono Logo */
+        .logo-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: inline-block;
+            background: linear-gradient(45deg, var(--primary), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Mockup Roles Info */
+        .mock-info {
+            margin-top: 25px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo-icon">📍</div>
+            <h1>Geofencing GDS</h1>
+            <p>Sistema de Gestión de Asistencia</p>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Usuario (DNI)</label>
+                <input type="text" id="username" class="form-control" placeholder="Ingrese su usuario..." autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" class="form-control" placeholder="••••••••">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-login">
+                Iniciar Sesión
+            </button>
+        </form>
+
+        <div class="mock-info">
+            <p><strong>Mocks para la demostración:</strong></p>
+            <p>DNI: <strong>tec</strong> -> Entra a Técnico</p>
+            <p>DNI: <strong>sup</strong> -> Entra a Supervisor</p>
+            <p>DNI: <strong>admin</strong> -> Entra a Admin TI</p>
+        </div>
+    </div>
+
+    <!-- Reuso del Toast -->
+    <div id="toast" class="toast hidden">
+        <p id="toast-message"></p>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const user = document.getElementById('username').value.trim().toLowerCase();
+            const pass = document.getElementById('password').value.trim();
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+
+            const mostrarError = (msg) => {
+                toastMsg.textContent = msg;
+                toast.className = 'toast error show';
+                setTimeout(() => toast.className = 'toast hidden', 3000);
+            };
+
+            if (!user || !pass) {
+                mostrarError('Por favor ingrese usuario y contraseña');
+                return;
+            }
+
+            // Simulador de Enrutador por Rol
+            if (user === 'tec') {
+                window.location.href = 'index.html';
+            } else if (user === 'sup') {
+                window.location.href = 'supervisor.html';
+            } else if (user === 'admin') {
+                window.location.href = 'admin.html';
+            } else {
+                mostrarError('Usuario incorrecto. Revisa las credenciales de prueba.');
+            }
+        });
+    </script>
+</body>
+</html>
